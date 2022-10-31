@@ -4,6 +4,9 @@ const cookieParser = require('cookie-parser');
 // use the express library
 const express = require('express');
 
+//add import
+const fetch = require('node-fetch');
+
 // create a new server application
 const app = express();
 
@@ -29,6 +32,75 @@ let nextVisitorId = 1;
   //res.render('welcome', {
     //name: req.query.name || "World",
   //});
+
+//app.get("/trivia", (req, res) => {
+  //res.send('TODO');
+//});  
+
+//app.get("/trivia", async (req, res) => {
+  // fetch the data
+  //const response = await fetch("https://opentdb.com/api.php?amount=1&type=multiple");
+
+  // interpret the body as json
+  //const content = await response.json();
+
+  // TODO: make proper html
+  //const format = JSON.stringify(content, 2);
+
+  // respond to the browser
+  // TODO: make proper html
+  //res.send(JSON.stringify(content, 2));
+//});
+
+app.get("/trivia", async (req, res) => {
+
+  // fetch the data
+  const response = await fetch("https://opentdb.com/api.php?amount=1&type=multiple");
+
+  // fail if bad response
+  if (!response.ok) {
+    res.status(500);
+    res.send(`Open Trivia Database failed with HTTP code ${response.status}`);
+    return;
+  }
+
+  // interpret the body as json
+  const content = await response.json();
+
+  const format = JSON.stringify(content, 2);
+
+  const correctAnswer = content.results[0].correct_answers;
+  const answers = content.results[0].incorrect_answers;
+  answers.push(correctAnswer);
+
+  // fail if db failed
+  //if (data.response_code !== 0) {
+    //res.status(500);
+    //res.send(`Open Trivia Database failed with internal response code ${data.response_code}`);
+    //return;
+  //}
+
+  //Shuffle Answers Array using random function 
+  answers.sort(() => Math.random() - 0.5)
+
+  const answerLinks = answers.map(answer=> {
+    return `<a href="javascript:alert('${
+      answer === correctAnswer ? 'Correct!' : 'Incorrect, Please Try Again!'
+    }')">${answer}</a>`
+  });
+
+  // respond to the browser
+  // TODO: make proper html
+  //res.send(JSON.stringify(content, 2));
+
+  res.render('trivia', {
+    category: content.results[0].category,
+    difficulty: content.results[0].difficulty,
+    question: content.results[0].question,
+    answers: answers,
+    answerLinks: answerLinks,
+  });
+});
 
 app.get('/', (req, res) => {
   let clockText = "";
